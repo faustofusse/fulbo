@@ -2,7 +2,10 @@ package main
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 )
 
@@ -34,7 +37,13 @@ import (
 
 func printableImage(url string) string {
     // open file
-    file, _ := os.Open(url)
+    file, err := os.Open(url)
+    if err != nil && errors.Is(err, os.ErrNotExist) {
+        file, _ = os.Create(url)
+        response, _ := http.Get(baseUrl + url)
+        io.Copy(file, response.Body)
+        response.Body.Close()
+    }
     defer file.Close()
     // get file info
     info, _ := file.Stat()
@@ -44,8 +53,6 @@ func printableImage(url string) string {
     // convert to base64
     str := base64.StdEncoding.EncodeToString(data)
     // print image
-    // fmt.Printf("%s;File=inline=1;width=2:%s%s", headerEscape(), str, footerEscape())
-    // fmt.Printf("\033]1337;File=inline=1;width=2:%s\a", str)
     return fmt.Sprintf("\033]1337;File=inline=1;width=2:%s\a", str)
 }
 
