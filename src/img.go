@@ -9,35 +9,38 @@ import (
 	"os"
 )
 
-// func isTmux() bool {
-// 	// for testing, set TMUX_TEST true/false
-// 	if os.Getenv("TMUX_TEST") == "false" {
-// 		return false
-// 	}
-// 	if os.Getenv("TMUX_TEST") == "true" {
-// 		return true
-// 	}
-// 	// otherwise, determine from TERM, TMUX variables
-// 	return (os.Getenv("TERM") == "screen" || len(os.Getenv("TMUX")) > 0)
-// }
+var baseDir string = "/Users/faustofusse/Documents/Software/terminal/fulbo/"
 
-// func headerEscape() string {
-// 	if isTmux() {
-// 		return "\x1bPtmux;\x1b\x1b]1337"
-// 	}
-// 	return "\x1b]1337"
-// }
+func isTmux() bool {
+	// for testing, set TMUX_TEST true/false
+	if os.Getenv("TMUX_TEST") == "false" {
+		return false
+	}
+	if os.Getenv("TMUX_TEST") == "true" {
+		return true
+	}
+	// otherwise, determine from TERM, TMUX variables
+	return (os.Getenv("TERM") == "screen" || len(os.Getenv("TMUX")) > 0)
+}
 
-// func footerEscape() string {
-// 	if isTmux() {
-// 		return "\a\x1b\\\n"
-// 	}
-// 	return "\a\033[AHolaaaa\n"
-// }
+func headerEscape() string {
+	if isTmux() {
+		return "\x1bPtmux;\x1b\x1b]1337"
+	}
+	return "\x1b]1337"
+}
+
+func footerEscape() string {
+	if isTmux() {
+		return "\a\x1b\\"
+	}
+	// return "\a\033[A\n"
+    return "\a"
+}
 
 func printableImage(url string) string {
     // open file
-    file, err := os.Open(url)
+    file, err := os.Open(baseDir + url)
     if err != nil && errors.Is(err, os.ErrNotExist) {
         file, _ = os.Create(url)
         response, _ := http.Get(baseUrl + url)
@@ -53,7 +56,7 @@ func printableImage(url string) string {
     // convert to base64
     str := base64.StdEncoding.EncodeToString(data)
     // print image
-    return fmt.Sprintf("\033]1337;File=inline=1;width=2:%s\a", str)
+    return fmt.Sprintf("%s;File=inline=1;width=2:%s%s", headerEscape(), str, footerEscape())
 }
 
 func printImage(url string) {
